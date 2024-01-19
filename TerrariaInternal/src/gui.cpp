@@ -121,12 +121,12 @@ void gui::DestroyDirectX() noexcept
 
 void gui::Setup()
 {
-	if (!SetupWindowClass("hack1337"))
+	if (!SetupWindowClass("ifyourereadingthisiamagayfurryandiwanttobedominatedbybigmenandwhippedandkickedintheballssoicancumrealharddaddy"))
 	{
 		throw std::runtime_error("Failed to create window class.");
 	}
 
-	if (!SetupWindow("hackwindow"))
+	if (!SetupWindow("imbouttacuuumeaugh"))
 	{
 		throw std::runtime_error("Failed to create window.");
 	}
@@ -199,6 +199,14 @@ LRESULT CALLBACK WindowProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	if (GetAsyncKeyState(VK_INSERT) & 1)
 	{
 		gui::open = !gui::open;
+		if (gui::open)
+		{
+			while (ShowCursor(true) < 0);
+		}
+		else
+		{
+			while (ShowCursor(false) >= 0);
+		}
 	}
 
 	if (gui::open && ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
