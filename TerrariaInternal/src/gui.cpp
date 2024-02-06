@@ -121,12 +121,12 @@ void gui::DestroyDirectX() noexcept
 
 void gui::Setup()
 {
-	if (!SetupWindowClass("ifyourereadingthisiamagayfurryandiwanttobedominatedbybigmenandwhippedandkickedintheballssoicancumrealharddaddy"))
+	if (!SetupWindowClass("windowass"))
 	{
 		throw std::runtime_error("Failed to create window class.");
 	}
 
-	if (!SetupWindow("imbouttacuuumeaugh"))
+	if (!SetupWindow("windo"))
 	{
 		throw std::runtime_error("Failed to create window.");
 	}
@@ -168,6 +168,8 @@ void gui::Destroy() noexcept
 	DestroyDirectX();
 }
 
+const char* cooldowns[] = { "Cooldown 1", "Cooldown 2", "Cooldown 3" };
+
 void gui::Render() noexcept
 {
 	ImGui_ImplDX9_NewFrame();
@@ -175,18 +177,37 @@ void gui::Render() noexcept
 	ImGui::NewFrame();
 
 	ImGui::Begin("Terraria Haxx", &open);
-	ImGui::Checkbox("Godmode", &features::godmode);
-	ImGui::Checkbox("Infinite Mana", &features::infiniteMana);
-	ImGui::Checkbox("No Weapon Cooldown", &features::noWeaponCooldown);
-	ImGui::Checkbox("Modify Weapon Damage", &features::modifyWeaponDamage);
-	ImGui::SliderInt("Weapon Damage", &features::weaponDamage, 1, 9999);
-	ImGui::Checkbox("Instant Break", &features::instantBreak);
-	ImGui::Checkbox("Fly", &features::fly);
-	ImGui::Checkbox("Fly + NoClip", &features::flyNoClip);
-	ImGui::SliderInt("Fly Speed", &features::flySpeed, 1, 10);
-	ImGui::Checkbox("Infinite Cloud Jump", &features::cloudJump);
-	ImGui::Checkbox("Infinite Wings Fly Time", &features::infiniteFlyTime);
-	ImGui::Checkbox("Infinite Spelinker Potion Time (drink one first)", &features::infiniteSpelunkerPotion);
+	ImGui::BeginTabBar("maintab");
+	if (ImGui::BeginTabItem("Combat"))
+	{
+		ImGui::Checkbox("Godmode", &features::godmode);
+		ImGui::Checkbox("Infinite Mana", &features::infiniteMana);
+		ImGui::Checkbox("Modify Weapon Damage", &features::modifyWeaponDamage);
+		ImGui::SliderInt("Weapon Damage", &features::weaponDamage, 1, 9999);
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Movement"))
+	{
+		ImGui::Checkbox("Fly", &features::fly);
+		ImGui::Checkbox("Fly + NoClip", &features::flyNoClip);
+		ImGui::SliderInt("Fly Speed", &features::flySpeed, 1, 10);
+		ImGui::Checkbox("Infinite Cloud Jump", &features::cloudJump);
+		ImGui::Checkbox("Infinite Wings Fly Time", &features::infiniteFlyTime);
+		ImGui::EndTabItem();
+	}
+	if (ImGui::BeginTabItem("Misc"))
+	{
+		ImGui::Checkbox("Instant Break", &features::instantBreak);
+		ImGui::Checkbox("No Weapon / Tool Cooldown", &features::noCooldown);
+		if (features::noCooldown) {
+			ImGui::Checkbox("Cooldown 1", &features::cooldown1);
+			ImGui::Checkbox("Cooldown 2", &features::cooldown2);
+			ImGui::Checkbox("Cooldown 3", &features::cooldown3);
+		}
+		ImGui::Checkbox("Full Bright", &features::fullBright);
+		ImGui::EndTabItem();
+	}
+	ImGui::EndTabBar();
 	ImGui::End();
 
 	ImGui::EndFrame();

@@ -2,48 +2,62 @@
 #include "gui.h"
 #include <vector>
 
+struct Vector2
+{
+	float x, y;
+};
+
 class player
 {
-public:
+private:
 	char pad_0000[32]; //0x0000
+public:
 	bool canMove; //0x0020
+private:
 	char pad_0021[7]; //0x0021
-	float x; //0x0028
-	float y; //0x002C
-	float velocityX; //0x0030
-	float velocityY; //0x0034
+public:
+	Vector2 position; //0x0028
+	Vector2 velocity; //0x0030
+private:
 	char pad_0038[656]; //0x0038
+public:
 	float flyTime; //0x02C8
+private:
 	char pad_02CC[308]; //0x02CC
-	uint32_t maxHealth; //0x0400
-	uint32_t maxhealth2; //0x0404
-	uint32_t currentHealth; //0x0408
-	int32_t currentMana; //0x040C
+public:
+	int32_t maxHealth; //0x0400
+private:
+	char pad_0404[4]; //0x0404
+public:
+	int32_t health; //0x0408
+	int32_t mana; //0x040C
 	int32_t maxMana; //0x0410
+private:
 	char pad_0414[228]; //0x0414
-	bool onground; //0x04F8
-	char pad_04F9[271]; //0x04F9
-	int32_t weaponCooldown; //0x0608
+public:
+	bool onGround; //0x04F8
+private:
+	char pad_04F9[263]; //0x04F9
+public:
+	int32_t firstAttackCooldown; //0x0600
+private:
+	char pad_0604[4]; //0x0604
+public:
+	int32_t secondAttackCooldown; //0x0608
+private:
 	char pad_060C[4]; //0x060C
-	int32_t weaponSecondAttackCooldown; //0x0610
-	char pad_0614[576]; //0x0614
-	bool cloudJump; //0x0854
-	char pad_0855[35]; //0x0855
-	bool N0000028D; //0x0878
-	int8_t balloonJump; //0x0879
-	bool N000008A5; //0x087A
-	char pad_087B[693]; //0x087B
-	int32_t N0000033B; //0x0B30
-	char pad_0B34[1128]; //0x0B34
-	bool N00000456; //0x0F9C
-	char pad_0F9D[3]; //0x0F9D
-	bool N00000457; //0x0FA0
-	char pad_0FA1[3]; //0x0FA1
-	int32_t spelunkerTimer; //0x0FA4
+public:
+	int32_t thirdAttackCooldown; //0x0610
+private:
+	char pad_0614[568]; //0x0614
+public:
+	bool cloudJump; //0x084C
 };
 
 namespace hooks
 {
+	inline int vec3one = 0;
+
 	void Setup();
 	void Destroy() noexcept;
 
@@ -88,12 +102,27 @@ namespace hooks
 	inline int get_LocalPlayerMax = 0x35000000;
 	using get_LocalPlayerFn = int(__fastcall*)() noexcept;
 	inline get_LocalPlayerFn get_LocalPlayerOriginal = nullptr;
-	int __fastcall get_LocalPlayer() noexcept;
 
 	inline std::vector<int> UpdateSig = { 0x55, 0x8b, 0xec, 0x57, 0x56, 0x53, 0x81, 0xec, -1, -1, -1, -1, 0x8b, 0xf1, 0x8d, 0xbd, -1, -1, -1, -1, 0xb9, -1, -1, -1, -1, 0x33, 0xc0, 0xf3, 0xab, 0x8b, 0xce, 0x89, 0x8d, -1, -1, -1, -1, 0x89, 0x55, 0xdc, 0x8b, 0x45, 0xdc, 0x3b, 0x05, -1, -1, -1, -1, 0x75, 0x0f };
-	inline int UpdateMin = 0x26000000;
-	inline int UpdateMax = 0x35000000;
+	inline int UpdateMin = 0x2a000000;
+	inline int UpdateMax = 0x50000000;
 	using UpdateFn = void(__fastcall*)(void*, int) noexcept;
 	inline UpdateFn UpdateOriginal = nullptr;
 	void __fastcall Update(void* __1, int whoAmI) noexcept;
+
+	inline std::vector<int> LightingEngineGetColorSig = { 0x55, 0x8b, 0xec, 0x57, 0x56, 0x53, 0x50, 0x8b, 0x5d, 0x0c, 0x8d, 0x71, 0x1c, 0x39, 0x1e, -1, -1, 0x8b, 0x06, 0x03, 0x46, 0x08, 0x3b, 0xc3, -1, -1, 0x8b, 0x46, 0x04 };
+	inline int LightingEngineGetColorMin = 0x22000000;
+	inline int LightingEngineGetColorMax = 0x28000000;
+	/*
+	using LightingEngineGetColorFn = int(__stdcall*)(int, int) noexcept;
+	inline LightingEngineGetColorFn LightingEngineGetColorOriginal = nullptr;
+	int __stdcall LightingEngineGetColor(int x, int y) noexcept;
+	*/
+
+
+	inline std::vector<int> Vector3GetOneSig = { 0x57, 0x56, 0x8b, 0xf9, 0x8b, 0x35, -1, -1, -1, -1, 0x83, 0xc6, 0x04, 0xf3, -1, -1, 0x06, 0x66, -1, -1, 0x07, 0x83, 0xc6, 0x08 };
+	inline int Vector3GetOneMin = 0x20000000;
+	inline int Vector3GetOneMax = 0x26000000;
+	using Vector3GetOneFn = int(__stdcall*)() noexcept;
+	inline Vector3GetOneFn Vector3GetOneOriginal = nullptr;
 }

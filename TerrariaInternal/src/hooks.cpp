@@ -11,9 +11,32 @@ DWORD GetFnFromSig(std::vector<int> sig, int min, int max)
 {
 	DWORD Entry = hooks::GetAddressFromSignature(sig, min, max);
 	if (Entry == NULL)
+	{
+		// God forbid
+		std::cout << "yeah, you've got a problem, whatever sig you're on right now it uhh def isn't within the memory bounds, you might want to fix that" << std::endl;
 		Entry = hooks::GetAddressFromSignature(sig);
+	}
 	std::cout << std::hex << Entry << std::endl;
 	return Entry;
+}
+
+DWORD lighting;
+DWORD end;
+
+void __declspec(naked) LightingEngineGetColor() noexcept
+{
+	__asm {
+		cmp features::fullBright, 1
+		je Enabled
+		push ebp // 1
+		mov ebp, esp // 2, 3
+		push edi // 4
+		push esi // 5
+		jmp[end]
+	Enabled:
+		call[hooks::Vector3GetOneOriginal]
+		ret 8
+	}
 }
 
 void hooks::Setup()
@@ -48,15 +71,22 @@ void hooks::Setup()
 		throw std::runtime_error("Unable to hook AddDamage().");
 	}
 
-	if (MH_CreateHook((LPVOID)GetFnFromSig(get_LocalPlayerSig, get_LocalPlayerMin, get_LocalPlayerMax), &get_LocalPlayer, reinterpret_cast<void**>(&get_LocalPlayerOriginal)))
-	{
-		throw std::runtime_error("Unable to hook get_LocalPlayer().");
-	}
-
 	if (MH_CreateHook((LPVOID)GetFnFromSig(UpdateSig, UpdateMin, UpdateMax), &Update, reinterpret_cast<void**>(&UpdateOriginal)))
 	{
 		throw std::runtime_error("Unable to hook Update().");
 	}
+
+	lighting = GetFnFromSig(LightingEngineGetColorSig, LightingEngineGetColorMin, LightingEngineGetColorMax);
+
+	if (MH_CreateHook((LPVOID)lighting, &LightingEngineGetColor, NULL))
+	{
+		throw std::runtime_error("Unable to hook LightingEngine::GetColor().");
+	}
+
+	get_LocalPlayerOriginal = (hooks::get_LocalPlayerFn)GetFnFromSig(get_LocalPlayerSig, get_LocalPlayerMin, get_LocalPlayerMax);
+	Vector3GetOneOriginal = (hooks::Vector3GetOneFn)GetFnFromSig(Vector3GetOneSig, Vector3GetOneMin, Vector3GetOneMax);
+
+	end = lighting + 5;
 
 	if (MH_EnableHook(MH_ALL_HOOKS))
 	{
@@ -150,6 +180,8 @@ HRESULT __stdcall hooks::Reset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* 
 	return result;
 }
 
+player* localPlayer = nullptr;
+
 float __fastcall hooks::Hurt(void* __1, void* damageSource, int damage, int hitDirection, bool pvp, bool quiet, bool crit, int cooldownCounter, bool dodgeable) noexcept
 {
 	if (features::godmode)
@@ -177,64 +209,59 @@ int __fastcall hooks::AddDamage(void* __1, int tileId, int damageAmount, bool up
 	return AddDamageOriginal(__1, tileId, damageAmount, updateAmount);
 }
 
-int __fastcall hooks::get_LocalPlayer() noexcept
-{
-	return get_LocalPlayerOriginal();
-}
-
 void __fastcall hooks::Update(void* __1, int whoAmI) noexcept
 {
 	UpdateOriginal(__1, whoAmI);
 
-	int p = hooks::get_LocalPlayerOriginal();
-	player* localPlayer = (player*)(p);
+	int p = get_LocalPlayerOriginal();
+	localPlayer = (player*)(p);
 
 	if (features::flyNoClip)
 	{
-		localPlayer->velocityX = 0.0f;
-		localPlayer->velocityY = -0.4f;
+		localPlayer->velocity.x = 0.0f;
+		localPlayer->velocity.y = -0.4f; // gravity
 		if (GetAsyncKeyState(0x57))
 		{
-			localPlayer->y = localPlayer->y - (10 * features::flySpeed);
+			localPlayer->position.y -= (10 * features::flySpeed);
 		}
 		if (GetAsyncKeyState(0x53))
 		{
-			localPlayer->y = localPlayer->y + (10 * features::flySpeed);
+			localPlayer->position.y += (10 * features::flySpeed);
 		}
 		if (GetAsyncKeyState(0x41))
 		{
-			localPlayer->x = localPlayer->x - (10 * features::flySpeed);
+			localPlayer->position.x -= (10 * features::flySpeed);
 		}
 		if (GetAsyncKeyState(0x44))
 		{
-			localPlayer->x = localPlayer->x + (10 * features::flySpeed);
+			localPlayer->position.x += (10 * features::flySpeed);
 		}
 	}
 	else if (features::fly)
 	{
-		localPlayer->velocityX = 0.0f;
-		localPlayer->velocityY = -0.4f;
+		localPlayer->velocity.x = 0.0f;
+		localPlayer->velocity.y = -0.4f; // gravity, but im retarded
 		if (GetAsyncKeyState(0x57))
 		{
-			localPlayer->velocityY = localPlayer->velocityY - (10 * features::flySpeed) + 0.4;
+			localPlayer->velocity.y -= (10 * features::flySpeed) + 0.4;
 		}
 		if (GetAsyncKeyState(0x53))
 		{
-			localPlayer->velocityY = localPlayer->velocityY + (10 * features::flySpeed) - 0.4;
+			localPlayer->velocity.y += (10 * features::flySpeed) - 0.4;
 		}
 		if (GetAsyncKeyState(0x41))
 		{
-			localPlayer->velocityX = localPlayer->velocityX - (10 * features::flySpeed);
+			localPlayer->velocity.x -= 10 * features::flySpeed;
 		}
 		if (GetAsyncKeyState(0x44))
 		{
-			localPlayer->velocityX = localPlayer->velocityX + (10 * features::flySpeed);
+			localPlayer->velocity.x += 10 * features::flySpeed;
 		}
 	}
 
 	if (features::godmode)
 	{
-		localPlayer->currentHealth = localPlayer->maxHealth;
+		localPlayer->health = localPlayer->maxHealth;
 	}
 
 	if (features::cloudJump)
@@ -244,22 +271,41 @@ void __fastcall hooks::Update(void* __1, int whoAmI) noexcept
 
 	if (features::infiniteMana)
 	{
-		localPlayer->currentMana = localPlayer->maxMana;
+		localPlayer->mana = localPlayer->maxMana;
 	}
 
-	if (features::noWeaponCooldown)
+	if (features::noCooldown)
 	{
-		localPlayer->weaponSecondAttackCooldown = 0;
-		localPlayer->weaponCooldown = 0;
+		if (features::cooldown1)
+			localPlayer->firstAttackCooldown = 0;
+		if (features::cooldown2)
+			localPlayer->secondAttackCooldown = 0;
+		if (features::cooldown3)
+			localPlayer->thirdAttackCooldown = 0;
 	}
 
 	if (features::infiniteFlyTime)
 	{
 		localPlayer->flyTime = 999999;
 	}
-
-	if (features::infiniteSpelunkerPotion)
-	{
-		localPlayer->spelunkerTimer = 999999;
-	}
 }
+
+/*
+int __stdcall hooks::LightingEngineGetColor(int x, int y) noexcept
+{
+	if (features::fullBright)
+	{
+		__asm {
+			call [hooks::Vector3GetOneOriginal]
+			pop ecx
+			pop ebx
+			pop esi
+			pop edi
+			pop ebp
+			ret 8
+		}
+	}
+
+	return LightingEngineGetColorOriginal(x, y);
+}
+*/

@@ -38,7 +38,10 @@ namespace features {
 	inline int flySpeed = 5;
 	inline bool cloudJump = false;
 	inline bool infiniteMana = false;
-	inline bool noWeaponCooldown = false;
+	inline bool noCooldown = false;
+	inline bool cooldown1 = true;
+	inline bool cooldown2 = true;
+	inline bool cooldown3 = true;
 	inline bool infiniteFlyTime = false;
-	inline bool infiniteSpelunkerPotion = false;
+	inline bool fullBright = false;
 }

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include "hooks.h"
+#include "game.h"
 #include "../ext/minhook/minhook.h"
 
 HMODULE instance;
@@ -16,14 +17,14 @@ DWORD WINAPI HackThread()
     FILE* f;
     freopen_s(&f, "CONOUT$", "w", stdout);
 
-    std::cout << "Gottem." << std::endl;
+    std::cout << "it's loading bro relax" << std::endl;
 
     bool worked = true;
     try
     {
+        game::Setup();
         gui::Setup();
         hooks::Setup();
-
     }
     catch (const std::exception& error)
     {
@@ -40,7 +41,8 @@ DWORD WINAPI HackThread()
         }
         if (GetAsyncKeyState(VK_NUMPAD1))
         {
-            std::cout << std::hex << hooks::get_LocalPlayer() << std::endl;
+            std::cout << std::hex << hooks::get_LocalPlayerOriginal() << std::endl;
+            std::cout << std::hex << hooks::Vector3GetOneOriginal() << ", " << hooks::Vector3GetOneOriginal << std::endl;
         }
     }
 
@@ -72,4 +74,3 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     }
     return TRUE;
 }
-
