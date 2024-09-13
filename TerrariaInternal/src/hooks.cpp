@@ -240,7 +240,7 @@ void __fastcall hooks::Update(void* __1, int whoAmI) noexcept
 	else if (features::fly)
 	{
 		localPlayer->velocity.x = 0.0f;
-		localPlayer->velocity.y = -0.4f; // gravity, but im retarded
+		localPlayer->velocity.y = -0.4f; // gravity, but im 
 		if (GetAsyncKeyState(0x57))
 		{
 			localPlayer->velocity.y -= (10 * features::flySpeed) + 0.4;
